@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -26,13 +26,19 @@
   --ref:        #c0c4d4;
 }
 
-html{background:var(--bg)}
+html,body{
+  height:100%;
+  height:100dvh;
+  margin:0;padding:0;
+  overflow:hidden;
+  background:var(--bg);
+}
 body{
   font-family:"Inter",system-ui,sans-serif;
-  font-size:12.5px;line-height:1.5;color:var(--text);
-  background:var(--bg);
+  font-size:12px;line-height:1.4;color:var(--text);
   font-variant-numeric:tabular-nums;
   -webkit-font-smoothing:antialiased;
+  display:flex;flex-direction:column;
 }
 
 /* ── Graph-paper background ── */
@@ -49,178 +55,334 @@ body::before{
 }
 header,main{position:relative;z-index:1}
 
-/* ── Top toolbar (Desmos-style) ── */
+/* ── Top toolbar ── */
 header{
   background:var(--toolbar);
-  padding:0 24px;height:46px;
-  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:0 14px;
+  height:32px;
+  flex:0 0 32px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
 }
 .hdr-title{
-  font-size:13px;font-weight:600;color:#fff;letter-spacing:-.01em;
+  font-size:12.5px;font-weight:600;color:#fff;letter-spacing:-.01em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.hdr-sub{font-size:11px;color:#9ca3af;margin-left:10px;font-weight:400}
+.hdr-sub{font-size:11px;color:#9ca3af;margin-left:8px;font-weight:400}
 .hdr-badge{
-  flex-shrink:0;font-size:10.5px;font-weight:600;letter-spacing:.05em;
+  flex-shrink:0;font-size:10px;font-weight:600;letter-spacing:.04em;
   color:#a5b4fc;background:rgba(165,180,252,.12);
   border:1px solid rgba(165,180,252,.25);
-  border-radius:4px;padding:3px 10px;white-space:nowrap;
+  border-radius:4px;padding:2px 8px;white-space:nowrap;
 }
 
-/* ── Layout ── */
+/* ── Viewport Grid Layout ── */
 main{
-  max-width:1180px;margin:0 auto;padding:16px 20px 48px;
-  display:grid;gap:14px;
-  grid-template-columns:minmax(260px,300px) minmax(0,1fr);
-  align-items:start;
+  flex:1 1 0;
+  min-height:0;
+  height:calc(100vh - 32px);
+  max-width:1560px;width:100%;margin:0 auto;
+  padding:5px 10px 6px;
+  display:grid;gap:8px;
+  grid-template-columns:minmax(240px,275px) minmax(0,1fr);
+  align-items:stretch;
+  overflow:hidden;
 }
-@media(max-width:820px){main{grid-template-columns:1fr}}
 
-/* ── Panels ── */
+/* ── Left Column ── */
+.left-col{
+  height:100%;
+  min-height:0;
+  display:flex;flex-direction:column;
+}
 .card{
   background:var(--panel);
   border:1px solid var(--border);
-  border-radius:8px;
+  border-radius:6px;
   overflow:hidden;
-  box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  box-shadow:0 1px 3px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.03);
 }
-.card-section{padding:12px 14px}
+.left-card{
+  height:100%;
+  min-height:0;
+  display:flex;flex-direction:column;
+  overflow-y:auto;
+  overflow-x:hidden;
+}
+.card-section{padding:4px 8px}
 .card-section+.card-section{border-top:1px solid var(--border)}
 .sec-label{
-  font-size:9.5px;font-weight:700;letter-spacing:.1em;
-  text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+  font-size:8.5px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:2px;
 }
 
-/* ── Circuit image (top) ── */
+/* ── Circuit image (enlarged at bottom) ── */
 .circuit-block{
-  padding:10px 14px 12px;
+  flex:1 1 0;
+  min-height:150px;
+  padding:5px 8px 6px;
   background:linear-gradient(to bottom,#fafbff,#f4f5fb);
-  border-bottom:1px solid var(--border);
+  border-top:1px solid var(--border);
   text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
 }
-.circuit-block .sec-label{text-align:left;margin-bottom:6px}
-.circuit-img{display:block;width:100%;max-width:288px;height:auto;margin:0 auto;border-radius:4px}
+.circuit-block .sec-label{
+  width:100%;
+  text-align:left;
+  margin-bottom:3px;
+  flex:0 0 auto;
+}
+.circuit-img-wrap{
+  flex:1 1 0;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  width:100%;
+}
+.circuit-img{
+  display:block;
+  height:auto;
+  width:auto;
+  max-height:clamp(150px, 34vh, 290px);
+  max-width:100%;
+  margin:0 auto;
+  border-radius:4px;
+  object-fit:contain;
+  cursor:zoom-in;
+  transition:transform .15s ease,box-shadow .15s ease;
+}
+.circuit-img:hover{
+  transform:scale(1.02);
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.zoom-hint{
+  position:absolute;bottom:2px;right:4px;
+  font-size:8px;background:rgba(26,26,46,.7);color:#fff;
+  padding:1px 5px;border-radius:3px;pointer-events:none;
+}
 
-/* ── Module grid ── */
-.grid-cols{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+/* ── Module sliders ── */
+.sliders-sec{flex:0 0 auto}
+.grid-cols{display:grid;grid-template-columns:1fr 1fr;gap:3px}
 .col-label{
-  text-align:center;font-size:9.5px;font-weight:700;
-  letter-spacing:.07em;text-transform:uppercase;
-  padding-bottom:5px;margin-bottom:3px;
+  text-align:center;font-size:8.5px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding-bottom:1px;margin-bottom:1px;
   border-bottom:2px solid;
 }
 .lbl-s1{color:var(--s1);border-color:var(--s1)}
 .lbl-s2{color:var(--s2);border-color:var(--s2)}
-.wire{width:1px;height:4px;background:var(--border);margin:0 auto}
+.wire{width:1px;height:1px;background:var(--border);margin:0 auto}
 .mod-wrap{display:flex}
 .tile{
   flex:1;min-width:0;
-  border:1px solid var(--border);border-radius:5px;
-  padding:5px 7px;
+  border:1px solid var(--border);border-radius:3px;
+  padding:2px 4px;
   background:var(--panel);
-  transition:border-color .2s,background .2s;
+  transition:border-color .15s,background .15s;
 }
 .tile.lit{background:var(--accent-lt);border-color:rgba(91,106,240,.3)}
-.tile-top{display:flex;justify-content:space-between;align-items:center}
-.tile-name{font-size:11px;font-weight:700;color:var(--text)}
-.tile-g{font-size:10px;color:var(--muted)}
-.tile-isc{font-size:10px;color:var(--muted);margin-top:1px}
+.tile-top{display:flex;justify-content:space-between;align-items:center;line-height:1.1}
+.tile-name{font-size:9px;font-weight:700;color:var(--text)}
+.tile-g{font-size:8.5px;color:var(--muted)}
+.tile-isc{font-size:8px;color:var(--muted);line-height:1}
 .tile input[type=range]{
-  width:100%;margin:5px 0 0;height:12px;
+  width:100%;margin:1px 0 0;height:7px;
   accent-color:var(--accent);cursor:pointer;
+  display:block;
 }
 
 /* ── Datasheet table ── */
+.ds-sec{flex:0 0 auto}
 table.ds{
   width:100%;border-collapse:collapse;
-  font-size:11px;text-align:center;
+  font-size:8.5px;text-align:center;line-height:1.2;
 }
 table.ds th,table.ds td{
-  border:1px solid var(--border);padding:4px 6px;
+  border:1px solid var(--border);padding:1.5px 3px;
 }
 table.ds thead th{
   background:#f4f5fb;font-weight:600;
-  font-size:9.5px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;
+  font-size:8px;letter-spacing:.04em;color:var(--muted);text-transform:uppercase;
 }
 table.ds td:first-child{text-align:left;color:var(--muted)}
 table.ds td:nth-child(2){font-weight:600;color:var(--text)}
 table.ds td:nth-child(3),table.ds td:nth-child(4){color:var(--muted)}
 
+/* ── Right Column ── */
+.right-col{
+  height:100%;
+  min-height:0;
+  display:flex;flex-direction:column;
+}
+
 /* ── Stats strip ── */
 .stats{
+  flex:0 0 auto;
   display:grid;
   grid-template-columns:repeat(6,1fr);
-  gap:8px;margin-bottom:12px;
+  gap:5px;margin-bottom:5px;
 }
-@media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
 .stat{
   background:var(--panel);
   border:1px solid var(--border);
-  border-radius:7px;padding:9px 11px;
-  box-shadow:0 1px 2px rgba(0,0,0,.04);
+  border-radius:5px;padding:2px 5px;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
 }
 .stat.hero{
   border-color:rgba(91,106,240,.4);
   background:var(--accent-lt);
 }
 .stat .sv{
-  font-size:16px;font-weight:700;color:var(--text);
+  font-size:12px;font-weight:700;color:var(--text);
   letter-spacing:-.02em;line-height:1.1;
 }
 .stat.hero .sv{color:var(--accent)}
-.stat .sl{font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.3}
+.stat .sl{
+  font-size:8px;color:var(--muted);margin-top:1px;
+  line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 
 /* ── Charts panel ── */
 .charts-panel{
+  flex:1 1 0;
+  min-height:0;
   background:var(--panel);
   border:1px solid var(--border);
-  border-radius:8px;overflow:hidden;
-  box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+  border-radius:6px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.05),0 1px 2px rgba(0,0,0,.03);
+  display:flex;flex-direction:column;
 }
-.chart-block{padding:12px 14px}
-.chart-block+.chart-block{border-top:1px solid var(--border)}
+.chart-block{
+  padding:3px 8px;
+  min-height:0;
+}
+.chart-block.net-block{
+  flex:1 1 50%;
+  display:flex;flex-direction:column;
+}
+.charts-row{
+  flex:1 1 50%;
+  min-height:0;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  border-top:1px solid var(--border);
+}
+.charts-row .chart-block{
+  display:flex;flex-direction:column;
+}
+.charts-row .chart-block:first-child{
+  border-right:1px solid var(--border);
+  border-top:none;
+}
+.charts-row .chart-block:last-child{
+  border-top:none;
+}
+
 .chart-title{
-  font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px;
+  flex:0 0 auto;
+  font-size:9.5px;font-weight:700;color:var(--text);margin-bottom:1px;line-height:1.2;
 }
 .chart-title span{color:var(--muted);font-weight:400}
-.chart-wrap{overflow-x:auto;
-  /* graph-paper inside charts */
+.legend{
+  flex:0 0 auto;
+  display:flex;flex-wrap:wrap;gap:1px 8px;
+  font-size:8.5px;color:var(--muted);margin-bottom:2px;line-height:1.2;
+}
+.legend i{
+  display:inline-block;width:10px;height:0;
+  border-top:2px solid;vertical-align:middle;margin-right:2px;
+}
+
+.chart-wrap{
+  flex:1 1 0;
+  min-height:0;
+  width:100%;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
   background-image:
     linear-gradient(var(--grid-major) 1px,transparent 1px),
     linear-gradient(90deg,var(--grid-major) 1px,transparent 1px);
-  background-size:40px 40px;
+  background-size:32px 32px;
   background-color:var(--panel);
   border-radius:4px;
 }
-svg.chart{display:block;width:100%;height:auto;min-width:320px;touch-action:pan-y}
-.legend{
-  display:flex;flex-wrap:wrap;gap:3px 12px;
-  font-size:10px;color:var(--muted);margin-bottom:6px;
+svg.chart{
+  display:block;
+  max-width:100%;max-height:100%;
+  width:auto;height:100%;
+  touch-action:pan-y;
 }
-.legend i{
-  display:inline-block;width:14px;height:0;
-  border-top:2px solid;vertical-align:middle;margin-right:4px;
-}
+#netChart{aspect-ratio:640/170}
+#ivChart,#pvChart{aspect-ratio:520/195}
+
 .readout{
-  font-size:11px;color:var(--muted);min-height:16px;
-  padding:7px 14px;border-top:1px solid var(--border);
-  background:#fafbff;
+  flex:0 0 auto;
+  font-size:9px;color:var(--muted);min-height:13px;
+  padding:2px 8px;border-top:1px solid var(--border);
+  background:#fafbff;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .readout b{color:var(--text);font-weight:600}
-.peaks-row{padding:7px 14px;display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid var(--border)}
+.peaks-row{
+  flex:0 0 auto;
+  padding:2px 8px;display:flex;flex-wrap:wrap;align-items:center;gap:3px;
+  border-top:1px solid var(--border);
+}
 .chip{
-  font-size:10.5px;border:1px solid var(--border);
-  border-radius:4px;padding:2px 8px;color:var(--muted);
+  font-size:8.5px;border:1px solid var(--border);
+  border-radius:3px;padding:0.5px 5px;color:var(--muted);line-height:1.2;
 }
 .chip.g{
   border-color:rgba(91,106,240,.4);
   color:var(--accent);font-weight:600;background:var(--accent-lt);
 }
-.note-row{padding:10px 14px;border-top:1px solid var(--border);background:#fafbff}
-.note{font-size:10.5px;color:#9ca3af;line-height:1.6}
+.note-row{
+  flex:0 0 auto;
+  padding:2px 8px;border-top:1px solid var(--border);background:#fafbff;
+}
+.note{font-size:8px;color:#9ca3af;line-height:1.3}
+
+/* ── Circuit Zoom Modal ── */
+.modal-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(15,23,42,.75);
+  backdrop-filter:blur(4px);
+  display:none;align-items:center;justify-content:center;
+  padding:16px;
+}
+.modal-overlay.open{display:flex}
+.modal-box{
+  background:#fff;border-radius:8px;padding:12px;
+  max-width:90vw;max-height:92vh;display:flex;flex-direction:column;
+  box-shadow:0 20px 40px rgba(0,0,0,.3);
+}
+.modal-hdr{
+  display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:8px;font-size:12px;font-weight:600;color:var(--text);
+}
+.modal-close{
+  background:none;border:none;font-size:20px;line-height:1;
+  color:var(--muted);cursor:pointer;padding:0 4px;
+}
+.modal-close:hover{color:var(--text)}
+.modal-box img{
+  max-width:100%;max-height:82vh;object-fit:contain;border-radius:4px;
+}
+
+/* ── Fallback for very small devices ── */
+@media (max-height:480px),(max-width:820px){
+  html,body{overflow-y:auto;height:auto}
+  main{height:auto;overflow:visible;grid-template-columns:1fr}
+}
 
 /* ── Scrollbar ── */
-::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
 </style>
@@ -231,76 +393,81 @@ svg.chart{display:block;width:100%;height:auto;min-width:320px;touch-action:pan-
 <header>
   <div style="display:flex;align-items:center;min-width:0">
     <span class="hdr-title">PV Array Partial Shading Simulator</span>
-    <span class="hdr-sub">4S &times; 2P &nbsp;&mdash;&nbsp; Rayzon L&rsquo;LIOS 625 W<sub style="font-size:9px">p</sub></span>
+    <span class="hdr-sub">4S &times; 2P &nbsp;&mdash;&nbsp; Rayzon L&rsquo;LIOS 625 W<sub style="font-size:8px">p</sub></span>
   </div>
   <div class="hdr-badge">EE 321 &nbsp;&bull;&nbsp; PV Systems Design</div>
 </header>
 
 <main>
   <!-- ── Left column ── -->
-  <div>
-    <div class="card" style="margin-bottom:12px">
-
-      <!-- Circuit first -->
-      <div class="circuit-block">
-        <div class="sec-label">Circuit Diagram &mdash; 4S&ndash;2P with Bypass Diodes</div>
-        <img class="circuit-img" src="circuit.png" alt="4S-2P PV circuit with bypass diodes">
-      </div>
+  <div class="left-col">
+    <div class="card left-card">
 
       <!-- Irradiance sliders -->
-      <div class="card-section">
+      <div class="card-section sliders-sec">
         <div class="sec-label">Irradiance per Module (W/m&sup2;)</div>
-        <div class="grid-cols" style="margin-bottom:5px">
+        <div class="grid-cols" style="margin-bottom:3px">
           <div class="col-label lbl-s1">String 1</div>
           <div class="col-label lbl-s2">String 2</div>
         </div>
         <div class="grid-cols" id="grid"></div>
-        <p style="font-size:10px;color:var(--muted);margin-top:7px">Drag sliders 0&ndash;1000 W/m&sup2; &nbsp;&bull;&nbsp; T<sub>cell</sub> = 25 &deg;C</p>
+        <p style="font-size:8.5px;color:var(--muted);margin-top:3px;line-height:1.1">0&ndash;1000 W/m&sup2; &nbsp;&bull;&nbsp; T<sub>cell</sub> = 25 &deg;C</p>
       </div>
 
       <!-- Module datasheet -->
-      <div class="card-section">
+      <div class="card-section ds-sec">
         <div class="sec-label">Module Parameters &mdash; Rayzon L&rsquo;LIOS 625 W<sub>p</sub></div>
         <table class="ds" id="dsTable" aria-label="Module electrical parameters"></table>
+      </div>
+
+      <!-- Circuit diagram enlarged at bottom -->
+      <div class="circuit-block">
+        <div class="sec-label">Circuit Diagram &mdash; 4S&ndash;2P with Bypass Diodes</div>
+        <div class="circuit-img-wrap">
+          <img class="circuit-img" id="circuitThumbnail" src="circuit.png" alt="4S-2P PV circuit with bypass diodes" title="Click to view full schematic">
+          <span class="zoom-hint">&#128269; Click to zoom</span>
+        </div>
       </div>
 
     </div>
   </div>
 
   <!-- ── Right column ── -->
-  <div>
+  <div class="right-col">
     <div class="stats" id="stats"></div>
 
     <div class="charts-panel">
 
-      <div class="chart-block">
+      <div class="chart-block net-block">
         <div class="chart-title">I-V &amp; P-V Characteristics <span>(I<sub>T</sub> = I<sub>T1</sub> + I<sub>T2</sub>)</span></div>
         <div class="legend">
           <span><i style="border-color:var(--tot)"></i>Net current (A, left)</span>
           <span><i style="border-color:var(--pwr)"></i>Net power (W, right)</span>
           <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded reference</span>
         </div>
-        <div class="chart-wrap"><svg class="chart" id="netChart" viewBox="0 0 640 280" role="img" aria-label="Net IV PV"></svg></div>
+        <div class="chart-wrap"><svg class="chart" id="netChart" viewBox="0 0 640 170" role="img" aria-label="Net IV PV"></svg></div>
       </div>
 
-      <div class="chart-block">
-        <div class="chart-title">Individual String I-V Curves</div>
-        <div class="legend">
-          <span><i style="border-color:var(--s1)"></i>String 1 (I<sub>T1</sub>)</span>
-          <span><i style="border-color:var(--s2)"></i>String 2 (I<sub>T2</sub>)</span>
-          <span><i style="border-color:var(--tot)"></i>Array total (I<sub>T</sub>)</span>
-          <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded</span>
+      <div class="charts-row">
+        <div class="chart-block">
+          <div class="chart-title">Individual String I-V Curves</div>
+          <div class="legend">
+            <span><i style="border-color:var(--s1)"></i>String 1 (I<sub>T1</sub>)</span>
+            <span><i style="border-color:var(--s2)"></i>String 2 (I<sub>T2</sub>)</span>
+            <span><i style="border-color:var(--tot)"></i>Array total (I<sub>T</sub>)</span>
+            <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded</span>
+          </div>
+          <div class="chart-wrap"><svg class="chart" id="ivChart" viewBox="0 0 520 195" role="img" aria-label="String IV"></svg></div>
         </div>
-        <div class="chart-wrap"><svg class="chart" id="ivChart" viewBox="0 0 640 250" role="img" aria-label="String IV"></svg></div>
-      </div>
 
-      <div class="chart-block">
-        <div class="chart-title">P-V Characteristic <span>&nbsp;&#9679; Global MPP &nbsp;&#9675; Local MPP</span></div>
-        <div class="legend">
-          <span><i style="border-color:var(--pwr)"></i>Power with bypass diodes</span>
-          <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded reference</span>
+        <div class="chart-block">
+          <div class="chart-title">P-V Characteristic <span>&nbsp;&#9679; Global MPP &nbsp;&#9675; Local MPP</span></div>
+          <div class="legend">
+            <span><i style="border-color:var(--pwr)"></i>Power with bypass diodes</span>
+            <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded reference</span>
+          </div>
+          <div class="chart-wrap"><svg class="chart" id="pvChart" viewBox="0 0 520 195" role="img" aria-label="PV curve"></svg></div>
         </div>
-        <div class="chart-wrap"><svg class="chart" id="pvChart" viewBox="0 0 640 250" role="img" aria-label="PV curve"></svg></div>
       </div>
 
       <div class="readout" id="readout">Hover over a chart to read values at a given voltage.</div>
@@ -310,6 +477,17 @@ svg.chart{display:block;width:100%;height:auto;min-width:320px;touch-action:pan-
     </div>
   </div>
 </main>
+
+<!-- ── Circuit Lightbox Modal ── -->
+<div class="modal-overlay" id="circuitModal" onclick="this.classList.remove('open')">
+  <div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <span>Circuit Schematic &mdash; 4S&ndash;2P PV Array with Bypass Diodes</span>
+      <button class="modal-close" onclick="document.getElementById('circuitModal').classList.remove('open')" aria-label="Close modal">&times;</button>
+    </div>
+    <img src="circuit.png" alt="Full Circuit Schematic">
+  </div>
+</div>
 
 <script>
 (function(){
@@ -396,7 +574,9 @@ function findPeaks(d){
 }
 
 const XMAX=200,W=640;
-const M={l:44,r:12,t:10,b:28};
+const W2=520,H2=195;
+const M={l:40,r:44,t:10,b:24};
+const M2={l:38,r:12,t:8,b:24};
 
 function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
 
@@ -423,10 +603,10 @@ function mkAxes(pw,ph,ymax,ystep,ylabel,w,h,m){
 function pd(xs,ys,X,Y){return ys.map((y,k)=>(k?'L':'M')+X(xs[k]).toFixed(1)+' '+Y(y).toFixed(1)).join('');}
 
 function chart(el,o){
-  const h=o.h||250,m=M;
-  const pw=W-m.l-m.r,ph=h-m.t-m.b;
+  const w=o.w||W2,h=o.h||H2,m=o.m||M2;
+  const pw=w-m.l-m.r,ph=h-m.t-m.b;
   const X=v=>m.l+v/XMAX*pw,Y=y=>m.t+ph-y/o.ymax*ph;
-  let s=mkAxes(pw,ph,o.ymax,o.ystep,o.ylabel,W,h,m);
+  let s=mkAxes(pw,ph,o.ymax,o.ystep,o.ylabel,w,h,m);
   for(const se of o.series)
     s+=`<path d="${pd(se.x,se.y,X,Y)}" fill="none" stroke="${se.color}" stroke-width="${se.w}" ${se.dash?'stroke-dasharray="6 4"':''} stroke-linejoin="round"/>`;
   if(o.peaks)o.peaks.forEach(pk=>{
@@ -440,7 +620,7 @@ function chart(el,o){
 
 function netChart(){
   const el=document.getElementById('netChart');
-  const h=280,m={l:44,r:48,t:12,b:28};
+  const h=170,m=M;
   const pw=W-m.l-m.r,ph=h-m.t-m.b;
   const X=v=>m.l+v/XMAX*pw;
   const YI=i=>m.t+ph-i/34*ph;
@@ -486,7 +666,8 @@ function drawCharts(){
   netChart();
   const cs=k=>css(k);
   chart(document.getElementById('ivChart'),{
-    ymax:35,ystep:7,ylabel:'Current (A)',h:250,
+    w:W2,h:H2,m:M2,
+    ymax:35,ystep:7,ylabel:'Current (A)',
     series:[
       {x:REF.V,y:REF.IT,color:'#d1d5db',w:1.2,dash:true},
       {x:sim.V,y:sim.I1,color:cs('--s1'),w:1.8},
@@ -495,7 +676,8 @@ function drawCharts(){
     ]
   });
   chart(document.getElementById('pvChart'),{
-    ymax:6000,ystep:1000,ylabel:'Power (W)',h:250,
+    w:W2,h:H2,m:M2,
+    ymax:6000,ystep:1000,ylabel:'Power (W)',
     series:[
       {x:REF.V,y:REF.P,color:'#d1d5db',w:1.2,dash:true},
       {x:sim.V,y:sim.P,color:cs('--pwr'),w:2.2}
@@ -546,12 +728,15 @@ function renderReadout(){
   el.innerHTML=`V&nbsp;=&nbsp;<b>${sim.V[k].toFixed(1)} V</b> &nbsp;&bull;&nbsp; I<sub>T1</sub>&nbsp;=&nbsp;<b>${sim.I1[k].toFixed(2)} A</b> &nbsp; I<sub>T2</sub>&nbsp;=&nbsp;<b>${sim.I2[k].toFixed(2)} A</b> &nbsp; I<sub>T</sub>&nbsp;=&nbsp;<b>${sim.IT[k].toFixed(2)} A</b> &nbsp; P&nbsp;=&nbsp;<b>${sim.P[k].toFixed(0)} W</b>`;
 }
 
-function attachHover(id,rm){
+function attachHover(id,rm,customW,customM){
   const svg=document.getElementById(id);
+  const curW=customW||W;
+  const curML=(customM&&customM.l)||40;
+  const curMR=rm||(customM&&customM.r)||10;
   const move=e=>{
     const r=svg.getBoundingClientRect();
-    const x=(e.clientX-r.left)/r.width*W;
-    const v=(x-M.l)/(W-M.l-(rm||M.r))*XMAX;
+    const x=(e.clientX-r.left)/r.width*curW;
+    const v=(x-curML)/(curW-curML-curMR)*XMAX;
     hoverV=Math.max(0,Math.min(XMAX,v));drawCharts();renderReadout();
   };
   svg.addEventListener('pointermove',move);
@@ -607,8 +792,17 @@ function buildTable(){
 }
 
 buildGrid();buildTable();
-attachHover('netChart',48);attachHover('ivChart');attachHover('pvChart');
+attachHover('netChart',44,W,M);
+attachHover('ivChart',M2.r,W2,M2);
+attachHover('pvChart',M2.r,W2,M2);
 update();
+
+const thumb=document.getElementById('circuitThumbnail');
+const modal=document.getElementById('circuitModal');
+if(thumb&&modal){
+  thumb.addEventListener('click',()=>modal.classList.add('open'));
+  window.addEventListener('keydown',e=>{if(e.key==='Escape')modal.classList.remove('open');});
+}
 })();
 </script>
 </body>
