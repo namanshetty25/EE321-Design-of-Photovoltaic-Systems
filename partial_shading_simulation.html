@@ -1,0 +1,615 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PV Shading Simulator — 4S × 2P | Rayzon L'LIOS 625 Wp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:         #f8f9fb;
+  --panel:      #ffffff;
+  --toolbar:    #2d2d2d;
+  --text:       #1a1a2e;
+  --muted:      #6e7587;
+  --border:     #dde1ec;
+  --grid-major: rgba(99,107,140,.13);
+  --grid-minor: rgba(99,107,140,.055);
+  --accent:     #5b6af0;
+  --accent-lt:  #eef0fd;
+  --s1:         #4361ee;
+  --s2:         #e63946;
+  --tot:        #1a1a2e;
+  --pwr:        #5b6af0;
+  --ref:        #c0c4d4;
+}
+
+html{background:var(--bg)}
+body{
+  font-family:"Inter",system-ui,sans-serif;
+  font-size:12.5px;line-height:1.5;color:var(--text);
+  background:var(--bg);
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Graph-paper background ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:
+    linear-gradient(var(--grid-major) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-major) 1px,transparent 1px),
+    linear-gradient(var(--grid-minor) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-minor) 1px,transparent 1px);
+  background-size:80px 80px,80px 80px,16px 16px,16px 16px;
+  background-position:0 0,0 0,-1px -1px,-1px -1px;
+}
+header,main{position:relative;z-index:1}
+
+/* ── Top toolbar (Desmos-style) ── */
+header{
+  background:var(--toolbar);
+  padding:0 24px;height:46px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+}
+.hdr-title{
+  font-size:13px;font-weight:600;color:#fff;letter-spacing:-.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.hdr-sub{font-size:11px;color:#9ca3af;margin-left:10px;font-weight:400}
+.hdr-badge{
+  flex-shrink:0;font-size:10.5px;font-weight:600;letter-spacing:.05em;
+  color:#a5b4fc;background:rgba(165,180,252,.12);
+  border:1px solid rgba(165,180,252,.25);
+  border-radius:4px;padding:3px 10px;white-space:nowrap;
+}
+
+/* ── Layout ── */
+main{
+  max-width:1180px;margin:0 auto;padding:16px 20px 48px;
+  display:grid;gap:14px;
+  grid-template-columns:minmax(260px,300px) minmax(0,1fr);
+  align-items:start;
+}
+@media(max-width:820px){main{grid-template-columns:1fr}}
+
+/* ── Panels ── */
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+}
+.card-section{padding:12px 14px}
+.card-section+.card-section{border-top:1px solid var(--border)}
+.sec-label{
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:8px;
+}
+
+/* ── Circuit image (top) ── */
+.circuit-block{
+  padding:10px 14px 12px;
+  background:linear-gradient(to bottom,#fafbff,#f4f5fb);
+  border-bottom:1px solid var(--border);
+  text-align:center;
+}
+.circuit-block .sec-label{text-align:left;margin-bottom:6px}
+.circuit-img{display:block;width:100%;max-width:288px;height:auto;margin:0 auto;border-radius:4px}
+
+/* ── Module grid ── */
+.grid-cols{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.col-label{
+  text-align:center;font-size:9.5px;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;
+  padding-bottom:5px;margin-bottom:3px;
+  border-bottom:2px solid;
+}
+.lbl-s1{color:var(--s1);border-color:var(--s1)}
+.lbl-s2{color:var(--s2);border-color:var(--s2)}
+.wire{width:1px;height:4px;background:var(--border);margin:0 auto}
+.mod-wrap{display:flex}
+.tile{
+  flex:1;min-width:0;
+  border:1px solid var(--border);border-radius:5px;
+  padding:5px 7px;
+  background:var(--panel);
+  transition:border-color .2s,background .2s;
+}
+.tile.lit{background:var(--accent-lt);border-color:rgba(91,106,240,.3)}
+.tile-top{display:flex;justify-content:space-between;align-items:center}
+.tile-name{font-size:11px;font-weight:700;color:var(--text)}
+.tile-g{font-size:10px;color:var(--muted)}
+.tile-isc{font-size:10px;color:var(--muted);margin-top:1px}
+.tile input[type=range]{
+  width:100%;margin:5px 0 0;height:12px;
+  accent-color:var(--accent);cursor:pointer;
+}
+
+/* ── Datasheet table ── */
+table.ds{
+  width:100%;border-collapse:collapse;
+  font-size:11px;text-align:center;
+}
+table.ds th,table.ds td{
+  border:1px solid var(--border);padding:4px 6px;
+}
+table.ds thead th{
+  background:#f4f5fb;font-weight:600;
+  font-size:9.5px;letter-spacing:.05em;color:var(--muted);text-transform:uppercase;
+}
+table.ds td:first-child{text-align:left;color:var(--muted)}
+table.ds td:nth-child(2){font-weight:600;color:var(--text)}
+table.ds td:nth-child(3),table.ds td:nth-child(4){color:var(--muted)}
+
+/* ── Stats strip ── */
+.stats{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:8px;margin-bottom:12px;
+}
+@media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}}
+.stat{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:7px;padding:9px 11px;
+  box-shadow:0 1px 2px rgba(0,0,0,.04);
+}
+.stat.hero{
+  border-color:rgba(91,106,240,.4);
+  background:var(--accent-lt);
+}
+.stat .sv{
+  font-size:16px;font-weight:700;color:var(--text);
+  letter-spacing:-.02em;line-height:1.1;
+}
+.stat.hero .sv{color:var(--accent)}
+.stat .sl{font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.3}
+
+/* ── Charts panel ── */
+.charts-panel{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);
+}
+.chart-block{padding:12px 14px}
+.chart-block+.chart-block{border-top:1px solid var(--border)}
+.chart-title{
+  font-size:11px;font-weight:700;color:var(--text);margin-bottom:5px;
+}
+.chart-title span{color:var(--muted);font-weight:400}
+.chart-wrap{overflow-x:auto;
+  /* graph-paper inside charts */
+  background-image:
+    linear-gradient(var(--grid-major) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-major) 1px,transparent 1px);
+  background-size:40px 40px;
+  background-color:var(--panel);
+  border-radius:4px;
+}
+svg.chart{display:block;width:100%;height:auto;min-width:320px;touch-action:pan-y}
+.legend{
+  display:flex;flex-wrap:wrap;gap:3px 12px;
+  font-size:10px;color:var(--muted);margin-bottom:6px;
+}
+.legend i{
+  display:inline-block;width:14px;height:0;
+  border-top:2px solid;vertical-align:middle;margin-right:4px;
+}
+.readout{
+  font-size:11px;color:var(--muted);min-height:16px;
+  padding:7px 14px;border-top:1px solid var(--border);
+  background:#fafbff;
+}
+.readout b{color:var(--text);font-weight:600}
+.peaks-row{padding:7px 14px;display:flex;flex-wrap:wrap;gap:5px;border-top:1px solid var(--border)}
+.chip{
+  font-size:10.5px;border:1px solid var(--border);
+  border-radius:4px;padding:2px 8px;color:var(--muted);
+}
+.chip.g{
+  border-color:rgba(91,106,240,.4);
+  color:var(--accent);font-weight:600;background:var(--accent-lt);
+}
+.note-row{padding:10px 14px;border-top:1px solid var(--border);background:#fafbff}
+.note{font-size:10.5px;color:#9ca3af;line-height:1.6}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:3px}
+</style>
+</head>
+<body>
+
+<!-- ── Toolbar ── -->
+<header>
+  <div style="display:flex;align-items:center;min-width:0">
+    <span class="hdr-title">PV Array Partial Shading Simulator</span>
+    <span class="hdr-sub">4S &times; 2P &nbsp;&mdash;&nbsp; Rayzon L&rsquo;LIOS 625 W<sub style="font-size:9px">p</sub></span>
+  </div>
+  <div class="hdr-badge">EE 321 &nbsp;&bull;&nbsp; PV Systems Design</div>
+</header>
+
+<main>
+  <!-- ── Left column ── -->
+  <div>
+    <div class="card" style="margin-bottom:12px">
+
+      <!-- Circuit first -->
+      <div class="circuit-block">
+        <div class="sec-label">Circuit Diagram &mdash; 4S&ndash;2P with Bypass Diodes</div>
+        <img class="circuit-img" src="circuit.png" alt="4S-2P PV circuit with bypass diodes">
+      </div>
+
+      <!-- Irradiance sliders -->
+      <div class="card-section">
+        <div class="sec-label">Irradiance per Module (W/m&sup2;)</div>
+        <div class="grid-cols" style="margin-bottom:5px">
+          <div class="col-label lbl-s1">String 1</div>
+          <div class="col-label lbl-s2">String 2</div>
+        </div>
+        <div class="grid-cols" id="grid"></div>
+        <p style="font-size:10px;color:var(--muted);margin-top:7px">Drag sliders 0&ndash;1000 W/m&sup2; &nbsp;&bull;&nbsp; T<sub>cell</sub> = 25 &deg;C</p>
+      </div>
+
+      <!-- Module datasheet -->
+      <div class="card-section">
+        <div class="sec-label">Module Parameters &mdash; Rayzon L&rsquo;LIOS 625 W<sub>p</sub></div>
+        <table class="ds" id="dsTable" aria-label="Module electrical parameters"></table>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Right column ── -->
+  <div>
+    <div class="stats" id="stats"></div>
+
+    <div class="charts-panel">
+
+      <div class="chart-block">
+        <div class="chart-title">I-V &amp; P-V Characteristics <span>(I<sub>T</sub> = I<sub>T1</sub> + I<sub>T2</sub>)</span></div>
+        <div class="legend">
+          <span><i style="border-color:var(--tot)"></i>Net current (A, left)</span>
+          <span><i style="border-color:var(--pwr)"></i>Net power (W, right)</span>
+          <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded reference</span>
+        </div>
+        <div class="chart-wrap"><svg class="chart" id="netChart" viewBox="0 0 640 280" role="img" aria-label="Net IV PV"></svg></div>
+      </div>
+
+      <div class="chart-block">
+        <div class="chart-title">Individual String I-V Curves</div>
+        <div class="legend">
+          <span><i style="border-color:var(--s1)"></i>String 1 (I<sub>T1</sub>)</span>
+          <span><i style="border-color:var(--s2)"></i>String 2 (I<sub>T2</sub>)</span>
+          <span><i style="border-color:var(--tot)"></i>Array total (I<sub>T</sub>)</span>
+          <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded</span>
+        </div>
+        <div class="chart-wrap"><svg class="chart" id="ivChart" viewBox="0 0 640 250" role="img" aria-label="String IV"></svg></div>
+      </div>
+
+      <div class="chart-block">
+        <div class="chart-title">P-V Characteristic <span>&nbsp;&#9679; Global MPP &nbsp;&#9675; Local MPP</span></div>
+        <div class="legend">
+          <span><i style="border-color:var(--pwr)"></i>Power with bypass diodes</span>
+          <span><i style="border-color:var(--ref);border-top-style:dashed"></i>Unshaded reference</span>
+        </div>
+        <div class="chart-wrap"><svg class="chart" id="pvChart" viewBox="0 0 640 250" role="img" aria-label="PV curve"></svg></div>
+      </div>
+
+      <div class="readout" id="readout">Hover over a chart to read values at a given voltage.</div>
+      <div class="peaks-row" id="peaks"></div>
+      <div class="note-row"><p class="note" id="noteText"></p></div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+const DS={
+  Pmax:625,Voc:48.73,Vmp:41.19,Isc:15.97,Imp:15.18,
+  tbl:[[200,3],[400,6.3],[600,9.5],[800,12.87],[1000,15.97]]
+};
+
+document.getElementById('noteText').innerHTML=
+  'Single-diode model (STC): P<sub>mp</sub>='+DS.Pmax+' W, V<sub>mp</sub>='+DS.Vmp+' V, I<sub>mp</sub>='+DS.Imp+
+  ' A, V<sub>oc</sub>='+DS.Voc+' V, I<sub>sc</sub>='+DS.Isc+
+  ' A. I<sub>sc</sub> interpolated from irradiance table; V<sub>oc</sub> held constant.'+
+  ' Bypass diodes clamp each module at &minus;0.7 V. T<sub>cell</sub>=25\u00b0C.';
+
+function iscAt(g){
+  if(g<=0)return 0;
+  const t=DS.tbl;
+  if(g<=t[0][0])return t[0][1]*g/t[0][0];
+  for(let k=1;k<t.length;k++)
+    if(g<=t[k][0])return t[k-1][1]+(t[k][1]-t[k-1][1])*(g-t[k-1][0])/(t[k][0]-t[k-1][0]);
+  return t[t.length-1][1];
+}
+
+const RS=0.1,VB=0.7;
+let A;
+function params(a){
+  const e1=Math.exp(DS.Voc/a),e2=Math.exp(DS.Isc*RS/a);
+  const i0=Math.max(DS.Isc/(e1-e2),1e-300);
+  return{i0,iph:i0*(e1-1)};
+}
+function vAtImp(a){const p=params(a);return a*Math.log((p.iph-DS.Imp)/p.i0+1)-DS.Imp*RS-DS.Vmp;}
+function fit(){
+  let lo=0.5,hi=9;const sLo=Math.sign(vAtImp(lo));
+  for(let k=0;k<80;k++){const m=(lo+hi)/2;if(Math.sign(vAtImp(m))===sLo)lo=m;else hi=m;}
+  A=(lo+hi)/2;
+}
+fit();
+
+function vMod(I,G){
+  const isc=iscAt(G);
+  if(isc<=1e-9)return I<=1e-9?0:-VB;
+  const eVoc=Math.exp(DS.Voc/A)-1;
+  const iph=isc/(1-(Math.exp(isc*RS/A)-1)/eVoc);
+  const i0g=iph/eVoc;
+  if(I>=isc)return -VB;
+  return Math.max(A*Math.log((iph-I)/i0g+1)-I*RS,-VB);
+}
+function vStr(I,gs){let s=0;for(const g of gs)s+=vMod(I,g);return s;}
+function iStr(V,gs){
+  const v0=vStr(0,gs);if(V>=v0)return 0;
+  const imax=iscAt(Math.max(...gs));if(imax<=1e-9)return 0;
+  if(V<=vStr(imax,gs))return imax;
+  let lo=0,hi=imax;
+  for(let k=0;k<45;k++){const m=(lo+hi)/2;if(vStr(m,gs)>V)lo=m;else hi=m;}
+  return(lo+hi)/2;
+}
+
+const ROWS=4;
+let G=[[1000,1000],[1000,1000],[1000,1000],[1000,1000]];
+let hoverV=null;
+
+function strings(g){return[0,1].map(c=>g.map(r=>r[c]));}
+function simulate(g){
+  const S=strings(g);const N=640,vmax=200;
+  const V=[],I1=[],I2=[],IT=[],P=[];
+  for(let k=0;k<=N;k++){
+    const v=vmax*k/N,a=iStr(v,S[0]),b=iStr(v,S[1]);
+    V.push(v);I1.push(a);I2.push(b);IT.push(a+b);P.push(v*(a+b));
+  }
+  return{V,I1,I2,IT,P};
+}
+let REF=simulate([[1000,1000],[1000,1000],[1000,1000],[1000,1000]]);
+
+function findPeaks(d){
+  const pmax=Math.max(...d.P);const thr=Math.max(0.015*pmax,5);
+  const peaks=[];let candI=0,mode='up',minV=d.P[0];
+  for(let k=1;k<d.P.length;k++){
+    const p=d.P[k];
+    if(mode==='up'){if(p>d.P[candI])candI=k;else if(d.P[candI]-p>thr){peaks.push(candI);mode='down';minV=p;}}
+    else{if(p<minV)minV=p;else if(p-minV>thr){mode='up';candI=k;}}
+  }
+  if(mode==='up'&&d.P[candI]>thr&&d.V[candI]<198&&d.P[candI]-d.P[d.P.length-1]>thr)peaks.push(candI);
+  return peaks.filter(i=>d.P[i]>0.02*pmax);
+}
+
+const XMAX=200,W=640;
+const M={l:44,r:12,t:10,b:28};
+
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+
+function mkAxes(pw,ph,ymax,ystep,ylabel,w,h,m){
+  let s='';
+  for(let y=0;y<=ymax+1e-9;y+=ystep){
+    const yy=m.t+ph-y/ymax*ph;
+    s+=`<text x="${m.l-5}" y="${yy+3.5}" text-anchor="end" font-size="9" fill="#9ca3af">${y}</text>`;
+  }
+  for(let x=0;x<=XMAX;x+=25){
+    const xx=m.l+x/XMAX*pw;
+    s+=`<text x="${xx}" y="${m.t+ph+14}" text-anchor="middle" font-size="9" fill="#9ca3af">${x}</text>`;
+  }
+  for(let k=1;k<=4;k++){
+    const xx=m.l+k*DS.Voc/XMAX*pw;
+    if(xx<w-m.r)s+=`<line x1="${xx}" x2="${xx}" y1="${m.t+ph-3}" y2="${m.t+ph+2}" stroke="#9ca3af" stroke-width="1"/>`;
+  }
+  s+=`<line x1="${m.l}" x2="${w-m.r}" y1="${m.t+ph}" y2="${m.t+ph}" stroke="#d1d5db" stroke-width="1.5"/>`;
+  s+=`<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${m.t+ph}" stroke="#d1d5db" stroke-width="1.5"/>`;
+  s+=`<text x="${m.l+pw/2}" y="${h-3}" text-anchor="middle" font-size="10" fill="#9ca3af">Array Voltage (V)</text>`;
+  s+=`<text transform="translate(7 ${m.t+ph/2}) rotate(-90)" text-anchor="middle" font-size="10" fill="#9ca3af">${ylabel}</text>`;
+  return s;
+}
+function pd(xs,ys,X,Y){return ys.map((y,k)=>(k?'L':'M')+X(xs[k]).toFixed(1)+' '+Y(y).toFixed(1)).join('');}
+
+function chart(el,o){
+  const h=o.h||250,m=M;
+  const pw=W-m.l-m.r,ph=h-m.t-m.b;
+  const X=v=>m.l+v/XMAX*pw,Y=y=>m.t+ph-y/o.ymax*ph;
+  let s=mkAxes(pw,ph,o.ymax,o.ystep,o.ylabel,W,h,m);
+  for(const se of o.series)
+    s+=`<path d="${pd(se.x,se.y,X,Y)}" fill="none" stroke="${se.color}" stroke-width="${se.w}" ${se.dash?'stroke-dasharray="6 4"':''} stroke-linejoin="round"/>`;
+  if(o.peaks)o.peaks.forEach(pk=>{
+    const cx=X(pk.v),cy=Y(pk.p);
+    s+=pk.global?`<circle cx="${cx}" cy="${cy}" r="4.5" fill="${o.peakColor}" stroke="#fff" stroke-width="1.5"/>`
+                :`<circle cx="${cx}" cy="${cy}" r="3.5" fill="#fff" stroke="${o.peakColor}" stroke-width="1.5"/>`;
+  });
+  if(hoverV!==null)s+=`<line x1="${X(hoverV)}" x2="${X(hoverV)}" y1="${m.t}" y2="${m.t+ph}" stroke="#6b7280" stroke-opacity=".5" stroke-dasharray="3 3"/>`;
+  el.innerHTML=s;
+}
+
+function netChart(){
+  const el=document.getElementById('netChart');
+  const h=280,m={l:44,r:48,t:12,b:28};
+  const pw=W-m.l-m.r,ph=h-m.t-m.b;
+  const X=v=>m.l+v/XMAX*pw;
+  const YI=i=>m.t+ph-i/34*ph;
+  const YP=p=>m.t+ph-p/6000*ph;
+  let s='';
+  for(let k=0;k<=6;k++){
+    const yy=m.t+ph-k/6*ph;
+    s+=`<text x="${m.l-5}" y="${yy+3.5}" text-anchor="end" font-size="9" fill="#9ca3af">${(k*34/6).toFixed(0)}</text>`;
+    s+=`<text x="${W-m.r+6}" y="${yy+3.5}" font-size="9" fill="#5b6af0">${k*1000}</text>`;
+  }
+  for(let x=0;x<=XMAX;x+=25){
+    const xx=m.l+x/XMAX*pw;
+    s+=`<text x="${xx}" y="${m.t+ph+14}" text-anchor="middle" font-size="9" fill="#9ca3af">${x}</text>`;
+  }
+  for(let k=1;k<=4;k++){
+    const xx=m.l+k*DS.Voc/XMAX*pw;
+    if(xx<W-m.r){
+      s+=`<line x1="${xx}" x2="${xx}" y1="${m.t}" y2="${m.t+ph}" stroke="#e5e7eb" stroke-dasharray="3 4"/>`;
+      s+=`<text x="${xx}" y="${m.t+9}" text-anchor="middle" font-size="8.5" fill="#c0c4d4">${k}V<tspan font-size="7" dy="1">oc</tspan></text>`;
+    }
+  }
+  s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${m.t+ph}" y2="${m.t+ph}" stroke="#d1d5db" stroke-width="1.5"/>`;
+  s+=`<line x1="${m.l}" x2="${m.l}" y1="${m.t}" y2="${m.t+ph}" stroke="#d1d5db" stroke-width="1.5"/>`;
+  s+=`<text x="${m.l+pw/2}" y="${h-3}" text-anchor="middle" font-size="10" fill="#9ca3af">Array Voltage (V)</text>`;
+  s+=`<text transform="translate(7 ${m.t+ph/2}) rotate(-90)" text-anchor="middle" font-size="10" fill="#9ca3af">Current (A)</text>`;
+  s+=`<text transform="translate(${W-5} ${m.t+ph/2}) rotate(90)" text-anchor="middle" font-size="10" fill="#5b6af0">Power (W)</text>`;
+  const pp=(xs,ys,f)=>ys.map((y,k)=>(k?'L':'M')+X(xs[k]).toFixed(1)+' '+f(y).toFixed(1)).join('');
+  s+=`<path d="${pp(REF.V,REF.IT,YI)}" fill="none" stroke="#d1d5db" stroke-width="1.2" stroke-dasharray="6 4"/>`;
+  s+=`<path d="${pp(REF.V,REF.P,YP)}" fill="none" stroke="#d1d5db" stroke-width="1.2" stroke-dasharray="6 4"/>`;
+  s+=`<path d="${pp(sim.V,sim.IT,YI)}" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-linejoin="round"/>`;
+  s+=`<path d="${pp(sim.V,sim.P,YP)}" fill="none" stroke="#5b6af0" stroke-width="2" stroke-linejoin="round"/>`;
+  sim.peakList.forEach(pk=>{
+    const cx=X(pk.v),cy=YP(pk.p);
+    s+=pk.global?`<circle cx="${cx}" cy="${cy}" r="4.5" fill="#5b6af0" stroke="#fff" stroke-width="1.5"/>`
+                :`<circle cx="${cx}" cy="${cy}" r="3.5" fill="#fff" stroke="#5b6af0" stroke-width="1.5"/>`;
+  });
+  if(hoverV!==null)s+=`<line x1="${X(hoverV)}" x2="${X(hoverV)}" y1="${m.t}" y2="${m.t+ph}" stroke="#6b7280" stroke-opacity=".5" stroke-dasharray="3 3"/>`;
+  el.innerHTML=s;
+}
+
+let sim;
+function drawCharts(){
+  netChart();
+  const cs=k=>css(k);
+  chart(document.getElementById('ivChart'),{
+    ymax:35,ystep:7,ylabel:'Current (A)',h:250,
+    series:[
+      {x:REF.V,y:REF.IT,color:'#d1d5db',w:1.2,dash:true},
+      {x:sim.V,y:sim.I1,color:cs('--s1'),w:1.8},
+      {x:sim.V,y:sim.I2,color:cs('--s2'),w:1.8},
+      {x:sim.V,y:sim.IT,color:'#1a1a2e',w:2.2}
+    ]
+  });
+  chart(document.getElementById('pvChart'),{
+    ymax:6000,ystep:1000,ylabel:'Power (W)',h:250,
+    series:[
+      {x:REF.V,y:REF.P,color:'#d1d5db',w:1.2,dash:true},
+      {x:sim.V,y:sim.P,color:cs('--pwr'),w:2.2}
+    ],
+    peaks:sim.peakList,peakColor:css('--pwr')
+  });
+}
+
+function update(){
+  sim=simulate(G);
+  const pk=findPeaks(sim);
+  let gi=0;sim.P.forEach((p,k)=>{if(p>sim.P[gi])gi=k;});
+  sim.gi=gi;
+  sim.peakList=pk.map(i=>({v:sim.V[i],p:sim.P[i],i,global:Math.abs(sim.P[i]-sim.P[gi])<1e-6}));
+  if(!sim.peakList.some(p=>p.global))sim.peakList.push({v:sim.V[gi],p:sim.P[gi],i:gi,global:true});
+  drawCharts();renderStats();renderPeaks();renderReadout();refreshTiles();
+}
+
+function renderStats(){
+  const refP=Math.max(...REF.P);
+  const pm=sim.P[sim.gi],vm=sim.V[sim.gi],im=sim.IT[sim.gi],isc=sim.IT[0];
+  let voc=0;for(let k=sim.V.length-1;k>=0;k--)if(sim.IT[k]>0.02){voc=sim.V[k];break;}
+  const loss=Math.max(0,(1-pm/refP)*100);
+  const items=[
+    ['P<sub>max</sub> (W)',pm.toFixed(0),true],
+    ['V<sub>mpp</sub> (V)',vm.toFixed(1)],
+    ['I<sub>mpp</sub> (A)',im.toFixed(2)],
+    ['I<sub>sc</sub> (A)',isc.toFixed(2)],
+    ['V<sub>oc</sub> (V)',voc.toFixed(1)],
+    ['Shading loss',loss.toFixed(1)+' %']
+  ];
+  document.getElementById('stats').innerHTML=items.map(it=>
+    `<div class="stat${it[2]?' hero':''}"><div class="sv">${it[1]}</div><div class="sl">${it[0]}</div></div>`
+  ).join('');
+}
+
+function renderPeaks(){
+  const pl=sim.peakList.slice().sort((a,b)=>a.v-b.v);
+  document.getElementById('peaks').innerHTML=
+    pl.map(p=>`<span class="chip${p.global?' g':''}">${p.global?'Global MPP':'Local MPP'}: ${p.p.toFixed(0)} W at ${p.v.toFixed(1)} V</span>`).join('')+
+    (pl.length>1?'':`<span class="chip">Single peak &mdash; no mismatch</span>`);
+}
+
+function renderReadout(){
+  const el=document.getElementById('readout');
+  if(hoverV===null){el.innerHTML='Hover over a chart to read values at a given voltage.';return;}
+  const k=Math.min(sim.V.length-1,Math.round(hoverV/XMAX*(sim.V.length-1)));
+  el.innerHTML=`V&nbsp;=&nbsp;<b>${sim.V[k].toFixed(1)} V</b> &nbsp;&bull;&nbsp; I<sub>T1</sub>&nbsp;=&nbsp;<b>${sim.I1[k].toFixed(2)} A</b> &nbsp; I<sub>T2</sub>&nbsp;=&nbsp;<b>${sim.I2[k].toFixed(2)} A</b> &nbsp; I<sub>T</sub>&nbsp;=&nbsp;<b>${sim.IT[k].toFixed(2)} A</b> &nbsp; P&nbsp;=&nbsp;<b>${sim.P[k].toFixed(0)} W</b>`;
+}
+
+function attachHover(id,rm){
+  const svg=document.getElementById(id);
+  const move=e=>{
+    const r=svg.getBoundingClientRect();
+    const x=(e.clientX-r.left)/r.width*W;
+    const v=(x-M.l)/(W-M.l-(rm||M.r))*XMAX;
+    hoverV=Math.max(0,Math.min(XMAX,v));drawCharts();renderReadout();
+  };
+  svg.addEventListener('pointermove',move);
+  svg.addEventListener('pointerdown',move);
+  svg.addEventListener('pointerleave',()=>{hoverV=null;drawCharts();renderReadout();});
+}
+
+function buildGrid(){
+  let h='';
+  for(let c=0;c<2;c++){
+    h+='<div>';
+    for(let r=0;r<ROWS;r++){
+      if(r)h+='<div class="wire"></div>';
+      h+=`<div class="mod-wrap"><div class="tile" id="t${r}${c}">
+        <div class="tile-top"><span class="tile-name">M${r+1}${c+1}</span><span class="tile-g" id="g${r}${c}"></span></div>
+        <div class="tile-isc" id="i${r}${c}"></div>
+        <input type="range" min="0" max="1000" step="50" id="s${r}${c}" aria-label="Irradiance M${r+1}${c+1}">
+      </div></div>`;
+    }
+    h+='</div>';
+  }
+  document.getElementById('grid').innerHTML=h;
+  for(let r=0;r<ROWS;r++)for(let c=0;c<2;c++){
+    document.getElementById(`s${r}${c}`).addEventListener('input',e=>{
+      G[r][c]=+e.target.value;update();
+    });
+  }
+}
+
+function refreshTiles(){
+  for(let r=0;r<ROWS;r++)for(let c=0;c<2;c++){
+    const g=G[r][c];
+    const t=document.getElementById(`t${r}${c}`);
+    t.classList.toggle('lit',g>=700);
+    document.getElementById(`g${r}${c}`).textContent=g+' W/m\u00b2';
+    document.getElementById(`i${r}${c}`).textContent='I\u209b\u1d9c = '+iscAt(g).toFixed(2)+' A';
+    document.getElementById(`s${r}${c}`).value=g;
+  }
+}
+
+function buildTable(){
+  const params=[
+    ['P<sub>max</sub> (W<sub>p</sub>)',DS.Pmax],
+    ['V<sub>oc</sub> (V)',DS.Voc],
+    ['V<sub>mpp</sub> (V)',DS.Vmp],
+    ['I<sub>sc</sub> (A)',DS.Isc],
+    ['I<sub>mpp</sub> (A)',DS.Imp]
+  ];
+  const ins=DS.tbl.slice().reverse();
+  let h='<thead><tr><th>Parameter</th><th>Value</th><th>G (W/m\u00b2)</th><th>I<sub>sc</sub> (A)</th></tr></thead><tbody>';
+  params.forEach((pr,k)=>{h+=`<tr><td>${pr[0]}</td><td>${pr[1]}</td><td>${ins[k][0]}</td><td>${ins[k][1]}</td></tr>`;});
+  document.getElementById('dsTable').innerHTML=h+'</tbody>';
+}
+
+buildGrid();buildTable();
+attachHover('netChart',48);attachHover('ivChart');attachHover('pvChart');
+update();
+})();
+</script>
+</body>
+</html>
